@@ -943,3 +943,21 @@ body {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+
+/* Validação de notas */
+.grade-item input.is-invalid,
+.exam-box input.is-invalid {
+  border-color: var(--danger);
+  background: #fff7f7;
+  box-shadow: 0 0 0 .18rem rgba(220, 38, 38, .10);
+}
+
+.feedback-error {
+  border-color: rgba(220, 38, 38, .25);
+  background: #fff7f7;
+}
+
+.feedback-error h3 {
+  color: #991b1b;
+}

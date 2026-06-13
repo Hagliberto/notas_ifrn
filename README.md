@@ -147,3 +147,34 @@ As notas são calculadas diretamente no navegador, sem envio de dados para servi
 ## Licença
 
 Este projeto pode ser utilizado, estudado e adaptado livremente.
+
+
+## Atualização de validação
+
+Os campos de nota agora aceitam apenas:
+
+- valores de 0 a 100;
+- números inteiros ou decimais;
+- no máximo duas casas decimais;
+- ponto ou vírgula como separador decimal durante a digitação.
+
+Exemplos válidos:
+
+```txt
+0
+7
+7,5
+7.50
+85,75
+100
+100,00
+```
+
+Exemplos inválidos:
+
+```txt
+-1
+100,01
+85,999
+abc
+```

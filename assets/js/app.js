@@ -34,16 +34,37 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function bindEvents() {
-  form.addEventListener("input", calculateAndRender);
+  form.addEventListener("input", (event) => {
+    if (event.target.matches(".online-grade, #examGrade")) {
+      sanitizeGradeInput(event.target);
+    }
+
+    calculateAndRender();
+  });
+
+  form.addEventListener("blur", (event) => {
+    if (event.target.matches(".online-grade, #examGrade")) {
+      normalizeGradeInput(event.target);
+      calculateAndRender();
+    }
+  }, true);
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+
+    const isValid = validateAllGrades();
+
+    if (!isValid) {
+      showFeedbackError();
+      return;
+    }
+
     calculateAndRender(true);
     document.querySelector("#resultado").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  btnLimpar.addEventListener("click", clearForm);
-  btnExemplo.addEventListener("click", fillExample);
+  if (btnLimpar) btnLimpar.addEventListener("click", clearForm);
+  if (btnExemplo) btnExemplo.addEventListener("click", fillExample);
 }
 
 function renderOnlineInputs() {
@@ -66,11 +87,111 @@ function renderOnlineInputs() {
         max="100"
         step="0.01"
         inputmode="decimal"
-        placeholder="Nota">
+        placeholder="Nota"
+        data-grade-input="true"
+        aria-label="Nota da Avaliação Online ${i}">
     `;
 
     onlineGradesContainer.appendChild(item);
   }
+}
+
+/**
+ * Permite somente:
+ * - vazio;
+ * - números de 0 a 100;
+ * - vírgula ou ponto como separador decimal;
+ * - no máximo duas casas decimais.
+ */
+function sanitizeGradeInput(input) {
+  let value = input.value.replace(",", ".");
+
+  value = value.replace(/[^\d.]/g, "");
+
+  const firstDotIndex = value.indexOf(".");
+  if (firstDotIndex !== -1) {
+    const beforeDot = value.slice(0, firstDotIndex + 1);
+    const afterDot = value.slice(firstDotIndex + 1).replace(/\./g, "");
+    value = beforeDot + afterDot;
+  }
+
+  let [integerPart, decimalPart] = value.split(".");
+
+  integerPart = integerPart ?? "";
+  decimalPart = decimalPart ?? "";
+
+  if (integerPart.length > 1) {
+    integerPart = integerPart.replace(/^0+(?=\d)/, "");
+  }
+
+  if (integerPart.length > 3) {
+    integerPart = integerPart.slice(0, 3);
+  }
+
+  if (decimalPart.length > 2) {
+    decimalPart = decimalPart.slice(0, 2);
+  }
+
+  value = value.includes(".") ? `${integerPart}.${decimalPart}` : integerPart;
+
+  if (value !== "" && value !== ".") {
+    const numberValue = Number(value);
+
+    if (numberValue > 100) {
+      value = "100";
+    }
+
+    if (numberValue < 0) {
+      value = "0";
+    }
+  }
+
+  input.value = value === "." ? "" : value;
+  setInputValidity(input);
+}
+
+function normalizeGradeInput(input) {
+  const value = parseGrade(input.value);
+
+  if (value === null) {
+    input.value = "";
+    setInputValidity(input);
+    return;
+  }
+
+  input.value = String(value).replace(".", ".");
+  setInputValidity(input);
+}
+
+function validateAllGrades() {
+  const inputs = document.querySelectorAll(".online-grade, #examGrade");
+  let isValid = true;
+
+  inputs.forEach((input) => {
+    if (!setInputValidity(input)) {
+      isValid = false;
+    }
+  });
+
+  return isValid;
+}
+
+function setInputValidity(input) {
+  const rawValue = input.value.trim().replace(",", ".");
+
+  input.classList.remove("is-invalid");
+
+  if (rawValue === "") return true;
+
+  const pattern = /^(100|100\.0{1,2}|[0-9]{1,2}(\.\d{1,2})?)$/;
+  const numericValue = Number(rawValue);
+  const isValid = pattern.test(rawValue) && numericValue >= 0 && numericValue <= 100;
+
+  if (!isValid) {
+    input.classList.add("is-invalid");
+  }
+
+  return isValid;
 }
 
 function getOnlineGrades() {
@@ -82,11 +203,15 @@ function getOnlineGrades() {
 function parseGrade(value) {
   if (value === "" || value === null || value === undefined) return null;
 
-  const grade = Number(String(value).replace(",", "."));
+  const normalizedValue = String(value).trim().replace(",", ".");
+  const pattern = /^(100|100\.0{1,2}|[0-9]{1,2}(\.\d{1,2})?)$/;
+
+  if (!pattern.test(normalizedValue)) return null;
+
+  const grade = Number(normalizedValue);
 
   if (Number.isNaN(grade)) return null;
-  if (grade < 0) return 0;
-  if (grade > 100) return 100;
+  if (grade < 0 || grade > 100) return null;
 
   return grade;
 }
@@ -97,8 +222,6 @@ function calculateAndRender() {
 
   const unitsAverage = onlineGrades.length ? average(onlineGrades) : null;
 
-  // Média parcial: enquanto a prova não foi preenchida, mostra o peso já conquistado pelas unidades.
-  // Ex.: média das unidades 80 gera parcial 32, pois 80 x 40%.
   const partialFinalGrade = unitsAverage !== null && examGrade === null
     ? (unitsAverage * 4) / 10
     : null;
@@ -286,9 +409,23 @@ function renderPartialFeedback(neededExam, partialFinalGrade) {
   `;
 }
 
+function showFeedbackError() {
+  feedbackArea.className = "feedback-box feedback-error";
+  feedbackArea.innerHTML = `
+    <h3>Verifique as notas informadas</h3>
+    <p>Use apenas valores de 0 a 100, com no máximo duas casas decimais.</p>
+  `;
+}
+
 function clearForm() {
-  document.querySelectorAll(".online-grade").forEach((input) => input.value = "");
+  document.querySelectorAll(".online-grade").forEach((input) => {
+    input.value = "";
+    input.classList.remove("is-invalid");
+  });
+
   examInput.value = "";
+  examInput.classList.remove("is-invalid");
+
   calculateAndRender();
   document.querySelector("#notas").scrollIntoView({ behavior: "smooth", block: "start" });
 }
@@ -305,8 +442,10 @@ function fillExample() {
 
   document.querySelectorAll(".online-grade").forEach((input, index) => {
     input.value = examples[state.unitCount][index] ?? 75;
+    input.classList.remove("is-invalid");
   });
 
   examInput.value = 70;
+  examInput.classList.remove("is-invalid");
   calculateAndRender();
 }
