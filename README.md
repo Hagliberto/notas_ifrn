@@ -261,3 +261,20 @@ Se a segunda nota não for ativada, o sistema usa apenas a primeira nota da Aval
   - recuperação;
   - reprovado;
   - erro de preenchimento.
+
+
+## Versão 1.9.0
+
+- Adicionado recurso de **clicar e segurar** em um card para preencher a nota com `0,00`.
+- Ao preencher com clique longo, a aplicação exibe um toast de confirmação.
+- Adicionado pill de créditos: `Desenvolvido por Hagliberto Alves de Oliveira`.
+- Adicionada versão discreta da aplicação na interface.
+- A versão da aplicação passa a ser atualizada a cada nova entrega.
+
+
+## Versão 1.10.0
+
+- Refatorada toda a tela de **Navegação** (menu lateral/offcanvas).
+- A navegação agora usa cards compactos, com melhor hierarquia visual.
+- A versão da aplicação e a assinatura do desenvolvedor foram movidas para a tela de navegação.
+- A assinatura e a versão deixaram de aparecer no conteúdo principal, deixando a interface mais limpa.

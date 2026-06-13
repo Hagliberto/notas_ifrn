@@ -1,3 +1,5 @@
+const APP_VERSION = "1.10.0";
+
 const state = {
   unitCount: Number(document.documentElement.dataset.units || 8),
   passGrade: 60,
@@ -30,6 +32,8 @@ document.addEventListener("DOMContentLoaded", () => {
   renderOnlineInputs();
   prepareExamInput();
   bindEvents();
+  bindLongPressZero();
+  renderAppVersion();
   calculateAndRender();
 });
 
@@ -580,6 +584,93 @@ function showFeedbackError() {
     <p>Digite apenas números. A vírgula será inserida automaticamente, no formato 0,00 até 100,00.</p>
   `;
 }
+
+
+function bindLongPressZero() {
+  let pressTimer = null;
+  let targetCard = null;
+  let didLongPress = false;
+
+  const clearPress = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+    targetCard = null;
+  };
+
+  document.addEventListener("pointerdown", (event) => {
+    const ignoredElement = event.target.closest("button, a, summary, .bottom-nav, .appbar, .mobile-nav");
+    if (ignoredElement) return;
+
+    const card = event.target.closest(".grade-item, .exam-box");
+    if (!card) return;
+
+    targetCard = card;
+    didLongPress = false;
+
+    pressTimer = setTimeout(() => {
+      didLongPress = true;
+      setCardInputsToZero(targetCard);
+      showToast("Nota 0,00 adicionada ao card.");
+      targetCard.classList.add("long-press-pulse");
+      setTimeout(() => targetCard?.classList.remove("long-press-pulse"), 450);
+      calculateAndRender();
+    }, 700);
+  });
+
+  ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+    document.addEventListener(eventName, clearPress);
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!didLongPress) return;
+    event.preventDefault();
+    event.stopPropagation();
+    didLongPress = false;
+  }, true);
+}
+
+function setCardInputsToZero(card) {
+  if (!card) return;
+
+  const inputs = card.querySelectorAll(".grade-mask, #examGrade");
+
+  inputs.forEach((input) => {
+    if (input.closest("[hidden]")) return;
+    input.value = "0,00";
+    input.classList.remove("is-invalid");
+    updateUnitPreview(input.dataset.unit);
+  });
+}
+
+function showToast(message) {
+  let toast = document.querySelector("#appToast");
+
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "appToast";
+    toast.className = "app-toast";
+    toast.setAttribute("role", "status");
+    toast.setAttribute("aria-live", "polite");
+    document.body.appendChild(toast);
+  }
+
+  toast.innerHTML = `<i class="bi bi-check-circle-fill"></i><span>${message}</span>`;
+  toast.classList.add("show");
+
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2300);
+}
+
+function renderAppVersion() {
+  document.querySelectorAll("[data-app-version]").forEach((element) => {
+    element.textContent = `v${APP_VERSION}`;
+  });
+}
+
 
 function clearForm() {
   document.querySelectorAll(".grade-mask").forEach((input) => {

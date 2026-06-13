@@ -42,18 +42,73 @@
     </div>
   </header>
 
-  <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu">
-    <div class="offcanvas-header">
-      <h5 class="offcanvas-title">Navegação</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+  
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileMenu">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title">Navegação</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
+      </div>
+      <div class="offcanvas-body mobile-nav">
+        <div class="mobile-nav-shell">
+          <section class="mobile-nav-hero">
+            <div class="mobile-nav-hero-top">
+              <div class="mobile-nav-hero-icon"><i class="bi bi-grid-1x2-fill"></i></div>
+              <div>
+                <h6>Calculadora de Notas</h6>
+                <p>Acesse rapidamente o início e os modelos de cálculo por quantidade de unidades.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="mobile-nav-section">
+            <h6 class="mobile-nav-section-title"><i class="bi bi-compass"></i> Acesso rápido</h6>
+            <div class="mobile-nav-grid">
+              <a class="mobile-nav-card" href="../index.html">
+                <span class="mobile-nav-card-icon"><i class="bi bi-house-door"></i></span>
+                <span class="mobile-nav-card-text">
+                  <strong>Início</strong>
+                  <small>Visão geral da aplicação e regras de cálculo.</small>
+                </span>
+                <i class="bi bi-chevron-right mobile-nav-card-arrow"></i>
+              </a>
+
+              <a class="mobile-nav-card active" href="../pages/4-unidades.html">
+                <span class="mobile-nav-card-icon"><i class="bi bi-calculator"></i></span>
+                <span class="mobile-nav-card-text">
+                  <strong>Calculadora 4 unidades</strong>
+                  <small>Para disciplinas com 4 avaliações online + prova.</small>
+                </span>
+                <i class="bi bi-chevron-right mobile-nav-card-arrow"></i>
+              </a>
+
+              <a class="mobile-nav-card" href="../pages/6-unidades.html">
+                <span class="mobile-nav-card-icon"><i class="bi bi-calculator"></i></span>
+                <span class="mobile-nav-card-text">
+                  <strong>Calculadora 6 unidades</strong>
+                  <small>Para disciplinas com 6 avaliações online + prova.</small>
+                </span>
+                <i class="bi bi-chevron-right mobile-nav-card-arrow"></i>
+              </a>
+
+              <a class="mobile-nav-card" href="../pages/8-unidades.html">
+                <span class="mobile-nav-card-icon"><i class="bi bi-calculator"></i></span>
+                <span class="mobile-nav-card-text">
+                  <strong>Calculadora 8 unidades</strong>
+                  <small>Para disciplinas com 8 avaliações online + prova.</small>
+                </span>
+                <i class="bi bi-chevron-right mobile-nav-card-arrow"></i>
+              </a>
+            </div>
+          </section>
+
+          <section class="mobile-nav-footer">
+            <span class="mobile-nav-credit"><i class="bi bi-code-slash"></i> Desenvolvido por Hagliberto Alves de Oliveira</span>
+            <span class="mobile-nav-version"><i class="bi bi-tag"></i> v1.10.0</span>
+          </section>
+        </div>
+      </div>
     </div>
-    <div class="offcanvas-body mobile-nav">
-      <a href="../index.html"><i class="bi bi-house"></i> Início</a>
-      <a class="active" href="4-unidades.html"><i class="bi bi-calculator"></i> Calculadora 4 unidades</a>
-      <a class="" href="6-unidades.html"><i class="bi bi-calculator"></i> Calculadora 6 unidades</a>
-      <a class="" href="8-unidades.html"><i class="bi bi-calculator"></i> Calculadora 8 unidades</a>
-    </div>
-  </div>
+
 
   <main class="container app-container calculator-page">
 <section id="notas" class="app-card input-card">
@@ -164,7 +219,7 @@
         Preencha as notas para receber um diagnóstico.
       </div>
     </section>
-  </main>
+</main>
 
   <nav class="bottom-nav d-lg-none">
     <a href="../index.html"><i class="bi bi-house"></i><span>Início</span></a>
