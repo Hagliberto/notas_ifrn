@@ -189,3 +189,26 @@ Os campos de nota foram ajustados para melhorar a digitação em celulares:
 - a validação acontece enquanto o usuário digita;
 - o campo continua aceitando somente notas de 0 a 100;
 - o limite de duas casas decimais continua ativo.
+
+
+## Atualização: máscara de nota da direita para a esquerda
+
+A digitação das notas foi ajustada para funcionar como máscara automática.
+
+O aluno digita apenas números e a vírgula é inserida automaticamente:
+
+```txt
+7     -> 0,07
+75    -> 0,75
+755   -> 7,55
+7550  -> 75,50
+10000 -> 100,00
+```
+
+O sistema continua limitando a nota entre `0,00` e `100,00`.
+
+Também foi adicionado um favicon SVG em:
+
+```txt
+assets/img/favicon.svg
+```

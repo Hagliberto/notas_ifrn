@@ -34,26 +34,31 @@ document.addEventListener("DOMContentLoaded", () => {
   calculateAndRender();
 });
 
-
 function prepareExamInput() {
   if (!examInput) return;
 
   examInput.type = "text";
-  examInput.inputMode = "decimal";
+  examInput.inputMode = "numeric";
   examInput.maxLength = 6;
   examInput.autocomplete = "off";
-  examInput.placeholder = "0 a 100";
-  examInput.title = "Digite uma nota de 0 a 100 com até duas casas decimais";
+  examInput.placeholder = "0,00";
+  examInput.title = "Digite apenas números. A vírgula será inserida automaticamente.";
 }
 
 function bindEvents() {
   form.addEventListener("input", (event) => {
     if (event.target.matches(".online-grade, #examGrade")) {
-      sanitizeGradeInput(event.target);
+      applyCurrencyLikeGradeMask(event.target);
     }
 
     calculateAndRender();
   });
+
+  form.addEventListener("focus", (event) => {
+    if (event.target.matches(".online-grade, #examGrade") && event.target.value === "") {
+      event.target.placeholder = "0,00";
+    }
+  }, true);
 
   form.addEventListener("blur", (event) => {
     if (event.target.matches(".online-grade, #examGrade")) {
@@ -96,11 +101,11 @@ function renderOnlineInputs() {
         type="text"
         id="online${i}"
         class="online-grade"
-        inputmode="decimal"
+        inputmode="numeric"
         autocomplete="off"
         maxlength="6"
-        placeholder="0 a 100"
-        title="Digite uma nota de 0 a 100 com até duas casas decimais"
+        placeholder="0,00"
+        title="Digite apenas números. A vírgula será inserida automaticamente."
         aria-label="Nota da Avaliação Online ${i}">
     `;
 
@@ -109,95 +114,61 @@ function renderOnlineInputs() {
 }
 
 /**
- * Máscara em tempo real para melhorar a digitação no mobile:
- * - troca ponto por vírgula automaticamente;
- * - aceita somente números e uma vírgula;
- * - limita em duas casas decimais;
- * - limita o valor máximo em 100.
+ * Máscara de nota da direita para a esquerda.
+ *
+ * Exemplos:
+ * 7     -> 0,07
+ * 75    -> 0,75
+ * 755   -> 7,55
+ * 7550  -> 75,50
+ * 10000 -> 100,00
+ *
+ * O usuário digita apenas números no mobile.
+ * A vírgula é inserida automaticamente.
  */
-function sanitizeGradeInput(input) {
-  const cursorPosition = input.selectionStart;
-  let value = input.value.replace(/\./g, ",");
+function applyCurrencyLikeGradeMask(input) {
+  let digits = input.value.replace(/\D/g, "");
 
-  value = value.replace(/[^\d,]/g, "");
-
-  const firstCommaIndex = value.indexOf(",");
-  if (firstCommaIndex !== -1) {
-    const beforeComma = value.slice(0, firstCommaIndex + 1);
-    const afterComma = value.slice(firstCommaIndex + 1).replace(/,/g, "");
-    value = beforeComma + afterComma;
+  if (digits === "") {
+    input.value = "";
+    input.classList.remove("is-invalid");
+    return;
   }
 
-  let [integerPart, decimalPart] = value.split(",");
+  digits = digits.replace(/^0+(?=\d{3,})/, "");
 
-  integerPart = integerPart ?? "";
-  decimalPart = decimalPart ?? "";
+  let cents = Number(digits);
 
-  if (integerPart.length > 1) {
-    integerPart = integerPart.replace(/^0+(?=\d)/, "");
+  if (Number.isNaN(cents)) cents = 0;
+
+  if (cents > 10000) {
+    cents = 10000;
   }
 
-  if (integerPart.length > 3) {
-    integerPart = integerPart.slice(0, 3);
-  }
+  const value = cents / 100;
+  input.value = formatGrade(value);
 
-  if (decimalPart.length > 2) {
-    decimalPart = decimalPart.slice(0, 2);
-  }
-
-  value = value.includes(",") ? `${integerPart},${decimalPart}` : integerPart;
-
-  const numericValue = Number(value.replace(",", "."));
-
-  if (value !== "" && !Number.isNaN(numericValue) && numericValue > 100) {
-    value = "100";
-  }
-
-  input.value = value;
-  setInputValidity(input);
+  input.classList.remove("is-invalid");
 
   try {
-    const safePosition = Math.min(cursorPosition ?? input.value.length, input.value.length);
-    input.setSelectionRange(safePosition, safePosition);
+    const end = input.value.length;
+    input.setSelectionRange(end, end);
   } catch {
-    // Alguns navegadores mobile não permitem controlar o cursor em certos teclados.
+    // Alguns teclados mobile não permitem controlar o cursor.
   }
 }
 
 function normalizeGradeInput(input) {
-  const rawValue = input.value.trim();
-
-  if (rawValue === "") {
-    input.value = "";
-    setInputValidity(input);
-    return;
-  }
-
-  const value = parseGrade(rawValue);
+  const value = parseGrade(input.value);
 
   if (value === null) {
-    setInputValidity(input);
+    input.value = "";
+    input.classList.remove("is-invalid");
     return;
   }
 
-  input.value = formatInputValue(value, rawValue);
+  input.value = formatGrade(value);
   setInputValidity(input);
-}
-
-function formatInputValue(value, originalValue) {
-  const hadDecimal = originalValue.includes(",") || originalValue.includes(".");
-
-  if (!hadDecimal) {
-    return String(value).replace(".", ",");
-  }
-
-  const decimalPart = originalValue.replace(".", ",").split(",")[1] ?? "";
-
-  if (decimalPart.length === 0) {
-    return String(Math.trunc(value));
-  }
-
-  return value.toFixed(Math.min(decimalPart.length, 2)).replace(".", ",");
 }
 
 function validateAllGrades() {
@@ -214,13 +185,13 @@ function validateAllGrades() {
 }
 
 function setInputValidity(input) {
-  const rawValue = input.value.trim().replace(".", ",");
+  const rawValue = input.value.trim();
 
   input.classList.remove("is-invalid");
 
   if (rawValue === "") return true;
 
-  const pattern = /^(100|100,0{1,2}|[0-9]{1,2}(,\d{1,2})?)$/;
+  const pattern = /^(100,00|[0-9]{1,2},\d{2})$/;
   const numericValue = Number(rawValue.replace(",", "."));
   const isValid = pattern.test(rawValue) && numericValue >= 0 && numericValue <= 100;
 
@@ -241,7 +212,7 @@ function parseGrade(value) {
   if (value === "" || value === null || value === undefined) return null;
 
   const normalizedValue = String(value).trim().replace(".", ",");
-  const pattern = /^(100|100,0{1,2}|[0-9]{1,2}(,\d{1,2})?)$/;
+  const pattern = /^(100,00|[0-9]{1,2},\d{2})$/;
 
   if (!pattern.test(normalizedValue)) return null;
 
@@ -450,7 +421,7 @@ function showFeedbackError() {
   feedbackArea.className = "feedback-box feedback-error";
   feedbackArea.innerHTML = `
     <h3>Verifique as notas informadas</h3>
-    <p>Use apenas valores de 0 a 100, com no máximo duas casas decimais.</p>
+    <p>Digite apenas números. A vírgula será inserida automaticamente, no formato 0,00 até 100,00.</p>
   `;
 }
 
@@ -478,11 +449,11 @@ function fillExample() {
   if (expander) expander.open = true;
 
   document.querySelectorAll(".online-grade").forEach((input, index) => {
-    input.value = examples[state.unitCount][index] ?? 75;
+    input.value = formatGrade(examples[state.unitCount][index] ?? 75);
     input.classList.remove("is-invalid");
   });
 
-  examInput.value = 70;
+  examInput.value = "70,00";
   examInput.classList.remove("is-invalid");
   calculateAndRender();
 }
