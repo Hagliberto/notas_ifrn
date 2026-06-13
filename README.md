@@ -212,3 +212,52 @@ Também foi adicionado um favicon SVG em:
 ```txt
 assets/img/favicon.svg
 ```
+
+
+## Atualização: segunda nota opcional por Avaliação Online
+
+Cada Avaliação Online agora pode ter uma segunda nota opcional.
+
+Quando a segunda nota é ativada, a nota da unidade passa a ser a média das duas atividades:
+
+```txt
+Nota da unidade = (Nota 1 + Nota 2) ÷ 2
+```
+
+Exemplo:
+
+```txt
+Avaliação Online 1:
+Nota 1 = 80,00
+Nota 2 = 90,00
+
+Média da unidade = 85,00
+```
+
+Se a segunda nota não for ativada, o sistema usa apenas a primeira nota da Avaliação Online.
+
+
+## Ajuste de layout da 2ª nota
+
+- Nota 1 e Nota 2 agora ficam lado a lado quando a segunda nota é ativada.
+- O botão de adicionar/remover 2ª nota foi reduzido para um pill mais discreto.
+
+
+## Ajustes v7
+
+- O texto “A nota da unidade será a média das duas.” agora fica abaixo do bloco das duas notas.
+- O resumo inferior agora muda dinamicamente:
+  - com uma nota: `Nota:`
+  - com duas notas: `Nota Média:`
+
+
+## Ajustes v8
+
+- Cards de Avaliações Online e Prova Presencial agora recebem destaque visual quando há nota vazia.
+- O botão **Calcular** foi removido, pois o cálculo já é automático.
+- O card de **Feedback** ganhou mais ícones de reação para cada situação:
+  - média parcial;
+  - aprovado;
+  - recuperação;
+  - reprovado;
+  - erro de preenchimento.

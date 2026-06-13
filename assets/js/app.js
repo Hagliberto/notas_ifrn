@@ -16,7 +16,6 @@ const statusBadge = document.querySelector("#statusBadge");
 const feedbackArea = document.querySelector("#feedbackArea");
 const resultIcon = document.querySelector("#resultIcon");
 const btnLimpar = document.querySelector("#btnLimpar");
-const btnExemplo = document.querySelector("#btnExemplo");
 
 const barUnits = document.querySelector("#barUnits");
 const barExam = document.querySelector("#barExam");
@@ -47,21 +46,51 @@ function prepareExamInput() {
 
 function bindEvents() {
   form.addEventListener("input", (event) => {
-    if (event.target.matches(".online-grade, #examGrade")) {
+    if (event.target.matches(".grade-mask, #examGrade")) {
       applyCurrencyLikeGradeMask(event.target);
     }
 
     calculateAndRender();
   });
 
+  form.addEventListener("click", (event) => {
+    const button = event.target.closest(".btn-second-grade");
+    if (!button) return;
+
+    const unit = button.dataset.unit;
+    const secondArea = document.querySelector(`#secondArea${unit}`);
+    const secondInput = document.querySelector(`#online${unit}b`);
+    const card = button.closest(".grade-item");
+
+    if (!secondArea || !secondInput || !card) return;
+
+    const isHidden = secondArea.hidden;
+
+    secondArea.hidden = !isHidden;
+    card.classList.toggle("has-second-grade", isHidden);
+    button.classList.toggle("active", isHidden);
+    button.innerHTML = isHidden
+      ? '<i class="bi bi-dash-circle"></i> Remover 2ª nota'
+      : '<i class="bi bi-plus-circle"></i> 2ª nota';
+
+    if (!isHidden) {
+      secondInput.value = "";
+      secondInput.classList.remove("is-invalid");
+    } else {
+      secondInput.focus();
+    }
+
+    calculateAndRender();
+  });
+
   form.addEventListener("focus", (event) => {
-    if (event.target.matches(".online-grade, #examGrade") && event.target.value === "") {
+    if (event.target.matches(".grade-mask, #examGrade") && event.target.value === "") {
       event.target.placeholder = "0,00";
     }
   }, true);
 
   form.addEventListener("blur", (event) => {
-    if (event.target.matches(".online-grade, #examGrade")) {
+    if (event.target.matches(".grade-mask, #examGrade")) {
       normalizeGradeInput(event.target);
       calculateAndRender();
     }
@@ -69,20 +98,9 @@ function bindEvents() {
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-
-    const isValid = validateAllGrades();
-
-    if (!isValid) {
-      showFeedbackError();
-      return;
-    }
-
-    calculateAndRender(true);
-    document.querySelector("#resultado").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   if (btnLimpar) btnLimpar.addEventListener("click", clearForm);
-  if (btnExemplo) btnExemplo.addEventListener("click", fillExample);
 }
 
 function renderOnlineInputs() {
@@ -93,69 +111,86 @@ function renderOnlineInputs() {
     item.className = "grade-item";
 
     item.innerHTML = `
-      <label for="online${i}">
-        <span>Avaliação Online ${i}</span>
-        <span class="grade-number">U${i}</span>
-      </label>
-      <input
-        type="text"
-        id="online${i}"
-        class="online-grade"
-        inputmode="numeric"
-        autocomplete="off"
-        maxlength="6"
-        placeholder="0,00"
-        title="Digite apenas números. A vírgula será inserida automaticamente."
-        aria-label="Nota da Avaliação Online ${i}">
+      <div class="grade-item-header">
+        <label for="online${i}">
+          <span>Avaliação Online ${i}</span>
+          <span class="grade-number">U${i}</span>
+        </label>
+
+        <button type="button" class="btn-second-grade" data-unit="${i}" aria-controls="secondArea${i}">
+          <i class="bi bi-plus-circle"></i> 2ª nota
+        </button>
+      </div>
+
+      <div class="dual-grade-grid">
+        <div class="grade-input-group grade-primary-area">
+          <small>Nota 1</small>
+          <input
+            type="text"
+            id="online${i}"
+            class="online-grade grade-mask"
+            data-unit="${i}"
+            data-grade-part="1"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="6"
+            placeholder="0,00"
+            title="Digite apenas números. A vírgula será inserida automaticamente."
+            aria-label="Primeira nota da Avaliação Online ${i}">
+        </div>
+
+        <div class="grade-input-group second-grade-area" id="secondArea${i}" hidden>
+          <small>Nota 2</small>
+          <input
+            type="text"
+            id="online${i}b"
+            class="online-grade grade-mask second-grade"
+            data-unit="${i}"
+            data-grade-part="2"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="6"
+            placeholder="0,00"
+            title="Digite apenas números. A vírgula será inserida automaticamente."
+            aria-label="Segunda nota da Avaliação Online ${i}">
+        </div>
+      </div>
+
+      <small class="second-grade-help" id="secondHelp${i}" hidden>A nota da unidade será a média das duas.</small>
+
+      <div class="unit-average-preview" id="unitPreview${i}">
+        Nota: <strong>--</strong>
+      </div>
     `;
 
     onlineGradesContainer.appendChild(item);
   }
 }
 
-/**
- * Máscara de nota da direita para a esquerda.
- *
- * Exemplos:
- * 7     -> 0,07
- * 75    -> 0,75
- * 755   -> 7,55
- * 7550  -> 75,50
- * 10000 -> 100,00
- *
- * O usuário digita apenas números no mobile.
- * A vírgula é inserida automaticamente.
- */
 function applyCurrencyLikeGradeMask(input) {
   let digits = input.value.replace(/\D/g, "");
 
   if (digits === "") {
     input.value = "";
     input.classList.remove("is-invalid");
+    updateUnitPreview(input.dataset.unit);
     return;
   }
 
   digits = digits.replace(/^0+(?=\d{3,})/, "");
 
   let cents = Number(digits);
-
   if (Number.isNaN(cents)) cents = 0;
+  if (cents > 10000) cents = 10000;
 
-  if (cents > 10000) {
-    cents = 10000;
-  }
-
-  const value = cents / 100;
-  input.value = formatGrade(value);
-
+  input.value = formatGrade(cents / 100);
   input.classList.remove("is-invalid");
+  updateUnitPreview(input.dataset.unit);
 
   try {
     const end = input.value.length;
     input.setSelectionRange(end, end);
-  } catch {
-    // Alguns teclados mobile não permitem controlar o cursor.
-  }
+  } catch {}
 }
 
 function normalizeGradeInput(input) {
@@ -164,21 +199,22 @@ function normalizeGradeInput(input) {
   if (value === null) {
     input.value = "";
     input.classList.remove("is-invalid");
+    updateUnitPreview(input.dataset.unit);
     return;
   }
 
   input.value = formatGrade(value);
   setInputValidity(input);
+  updateUnitPreview(input.dataset.unit);
 }
 
 function validateAllGrades() {
-  const inputs = document.querySelectorAll(".online-grade, #examGrade");
+  const inputs = document.querySelectorAll(".grade-mask, #examGrade");
   let isValid = true;
 
   inputs.forEach((input) => {
-    if (!setInputValidity(input)) {
-      isValid = false;
-    }
+    if (input.closest("[hidden]")) return;
+    if (!setInputValidity(input)) isValid = false;
   });
 
   return isValid;
@@ -186,7 +222,6 @@ function validateAllGrades() {
 
 function setInputValidity(input) {
   const rawValue = input.value.trim();
-
   input.classList.remove("is-invalid");
 
   if (rawValue === "") return true;
@@ -195,17 +230,89 @@ function setInputValidity(input) {
   const numericValue = Number(rawValue.replace(",", "."));
   const isValid = pattern.test(rawValue) && numericValue >= 0 && numericValue <= 100;
 
-  if (!isValid) {
-    input.classList.add("is-invalid");
-  }
-
+  if (!isValid) input.classList.add("is-invalid");
   return isValid;
 }
 
+function getUnitInputs(unit) {
+  const grade1Input = document.querySelector(`#online${unit}`);
+  const grade2Input = document.querySelector(`#online${unit}b`);
+  const secondArea = document.querySelector(`#secondArea${unit}`);
+  return { grade1Input, grade2Input, secondArea };
+}
+
+function getUnitGrade(unit) {
+  const { grade1Input, grade2Input, secondArea } = getUnitInputs(unit);
+
+  const grade1 = parseGrade(grade1Input?.value);
+  const grade2 = !secondArea?.hidden ? parseGrade(grade2Input?.value) : null;
+
+  if (grade1 !== null && grade2 !== null) return (grade1 + grade2) / 2;
+  if (grade1 !== null) return grade1;
+  if (grade2 !== null) return grade2;
+
+  return null;
+}
+
+function updateUnitCardState(unit) {
+  const { grade1Input, grade2Input, secondArea } = getUnitInputs(unit);
+  const card = grade1Input?.closest(".grade-item");
+  if (!card) return;
+
+  const grade1 = parseGrade(grade1Input?.value);
+  const secondVisible = secondArea && !secondArea.hidden;
+  const grade2 = secondVisible ? parseGrade(grade2Input?.value) : null;
+
+  const isEmpty = !secondVisible
+    ? grade1 === null
+    : grade1 === null || grade2 === null;
+
+  card.classList.toggle("empty-note-card", isEmpty);
+  card.classList.toggle("complete-note-card", !isEmpty && (grade1 !== null || grade2 !== null));
+}
+
+function updateExamCardState() {
+  const examBox = document.querySelector(".exam-box");
+  if (!examBox) return;
+
+  const examGrade = parseGrade(examInput.value);
+  const isEmpty = examGrade === null;
+
+  examBox.classList.toggle("empty-note-card", isEmpty);
+  examBox.classList.toggle("complete-note-card", !isEmpty);
+}
+
 function getOnlineGrades() {
-  return Array.from(document.querySelectorAll(".online-grade"))
-    .map((input) => parseGrade(input.value))
-    .filter((value) => value !== null);
+  const grades = [];
+
+  for (let i = 1; i <= state.unitCount; i++) {
+    const grade = getUnitGrade(i);
+    if (grade !== null) grades.push(grade);
+    updateUnitPreview(i);
+    updateUnitCardState(i);
+  }
+
+  return grades;
+}
+
+function updateUnitPreview(unit) {
+  if (!unit) return;
+
+  const preview = document.querySelector(`#unitPreview${unit}`);
+  const help = document.querySelector(`#secondHelp${unit}`);
+  const { grade1Input, grade2Input, secondArea } = getUnitInputs(unit);
+
+  if (!preview) return;
+
+  const grade1 = parseGrade(grade1Input?.value);
+  const grade2 = !secondArea?.hidden ? parseGrade(grade2Input?.value) : null;
+  const hasSecondGrade = secondArea && !secondArea.hidden;
+  const grade = getUnitGrade(unit);
+
+  if (help) help.hidden = !hasSecondGrade;
+
+  const label = hasSecondGrade ? "Nota Média:" : "Nota:";
+  preview.innerHTML = `${label} <strong>${formatGrade(grade)}</strong>`;
 }
 
 function parseGrade(value) {
@@ -228,12 +335,10 @@ function calculateAndRender() {
   const onlineGrades = getOnlineGrades();
   const examGrade = parseGrade(examInput.value);
 
+  updateExamCardState();
+
   const unitsAverage = onlineGrades.length ? average(onlineGrades) : null;
-
-  const partialFinalGrade = unitsAverage !== null && examGrade === null
-    ? (unitsAverage * 4) / 10
-    : null;
-
+  const partialFinalGrade = unitsAverage !== null && examGrade === null ? (unitsAverage * 4) / 10 : null;
   const finalGrade = unitsAverage !== null && examGrade !== null
     ? ((unitsAverage * 4) + (examGrade * 6)) / 10
     : partialFinalGrade;
@@ -315,6 +420,48 @@ function setBar(barElement, valueElement, value) {
     : formatGrade(value);
 }
 
+function reactionMarkup(type) {
+  const map = {
+    partial: [
+      ["bi-eye-fill", "Observando"],
+      ["bi-calculator-fill", "Simulando"],
+      ["bi-graph-up-arrow", "Acompanhando"]
+    ],
+    approved: [
+      ["bi-emoji-smile-fill", "Ótimo"],
+      ["bi-trophy-fill", "Aprovado"],
+      ["bi-stars", "Parabéns"]
+    ],
+    recovery: [
+      ["bi-emoji-neutral-fill", "Atenção"],
+      ["bi-arrow-repeat", "Recuperação"],
+      ["bi-lightbulb-fill", "Ainda dá"]
+    ],
+    failed: [
+      ["bi-emoji-frown-fill", "Alerta"],
+      ["bi-exclamation-triangle-fill", "Baixa média"],
+      ["bi-journal-x", "Revisar"]
+    ],
+    error: [
+      ["bi-shield-exclamation", "Corrigir"],
+      ["bi-123", "Formato"],
+      ["bi-x-circle-fill", "Inválido"]
+    ]
+  };
+
+  const items = map[type] || [];
+  return `
+    <div class="reaction-strip">
+      ${items.map(([icon, text]) => `
+        <span class="reaction-pill">
+          <i class="bi ${icon}"></i>
+          <small>${text}</small>
+        </span>
+      `).join("")}
+    </div>
+  `;
+}
+
 function updateStatus(finalGrade, unitsAverage, examGrade, neededExam) {
   statusBadge.className = "status-badge";
   progressBar.className = "progress-bar";
@@ -325,7 +472,10 @@ function updateStatus(finalGrade, unitsAverage, examGrade, neededExam) {
     resultIcon.innerHTML = '<i class="bi bi-speedometer2"></i>';
 
     feedbackArea.className = "feedback-empty";
-    feedbackArea.textContent = "Preencha as notas para receber um diagnóstico.";
+    feedbackArea.innerHTML = `
+      ${reactionMarkup("partial")}
+      <p>Preencha as notas para receber um diagnóstico.</p>
+    `;
     return;
   }
 
@@ -350,6 +500,7 @@ function updateStatus(finalGrade, unitsAverage, examGrade, neededExam) {
 function getStatus(finalGrade) {
   if (finalGrade >= state.passGrade) {
     return {
+      type: "approved",
       label: "Aprovado",
       className: "approved",
       progressClass: "bg-success",
@@ -361,6 +512,7 @@ function getStatus(finalGrade) {
 
   if (finalGrade >= state.recoveryMin) {
     return {
+      type: "recovery",
       label: "Recuperação",
       className: "recovery",
       progressClass: "bg-warning",
@@ -371,6 +523,7 @@ function getStatus(finalGrade) {
   }
 
   return {
+    type: "failed",
     label: "Reprovado pela média atual",
     className: "failed",
     progressClass: "bg-danger",
@@ -392,6 +545,7 @@ function renderFullFeedback(finalGrade, unitsAverage, examGrade, neededExam, sta
 
   feedbackArea.className = "feedback-box";
   feedbackArea.innerHTML = `
+    ${reactionMarkup(status.type)}
     <h3>${status.title}</h3>
     <p>${status.message}</p>
     <hr>
@@ -412,6 +566,7 @@ function renderPartialFeedback(neededExam, partialFinalGrade) {
 
   feedbackArea.className = "feedback-box";
   feedbackArea.innerHTML = `
+    ${reactionMarkup("partial")}
     <h3>Simulação parcial</h3>
     <p>${message}</p>
   `;
@@ -420,40 +575,46 @@ function renderPartialFeedback(neededExam, partialFinalGrade) {
 function showFeedbackError() {
   feedbackArea.className = "feedback-box feedback-error";
   feedbackArea.innerHTML = `
+    ${reactionMarkup("error")}
     <h3>Verifique as notas informadas</h3>
     <p>Digite apenas números. A vírgula será inserida automaticamente, no formato 0,00 até 100,00.</p>
   `;
 }
 
 function clearForm() {
-  document.querySelectorAll(".online-grade").forEach((input) => {
+  document.querySelectorAll(".grade-mask").forEach((input) => {
     input.value = "";
     input.classList.remove("is-invalid");
   });
 
-  examInput.value = "";
-  examInput.classList.remove("is-invalid");
-
-  calculateAndRender();
-  document.querySelector("#notas").scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function fillExample() {
-  const examples = {
-    4: [80, 75, 90, 65],
-    6: [80, 75, 90, 65, 70, 85],
-    8: [80, 75, 90, 65, 70, 85, 78, 88]
-  };
-
-  const expander = document.querySelector("#notesExpander");
-  if (expander) expander.open = true;
-
-  document.querySelectorAll(".online-grade").forEach((input, index) => {
-    input.value = formatGrade(examples[state.unitCount][index] ?? 75);
-    input.classList.remove("is-invalid");
+  document.querySelectorAll(".second-grade-area").forEach((area) => {
+    area.hidden = true;
   });
 
-  examInput.value = "70,00";
-  examInput.classList.remove("is-invalid");
+  document.querySelectorAll(".second-grade-help").forEach((help) => {
+    help.hidden = true;
+  });
+
+  document.querySelectorAll(".grade-item").forEach((card) => {
+    card.classList.remove("has-second-grade", "empty-note-card", "complete-note-card");
+  });
+
+  document.querySelectorAll(".btn-second-grade").forEach((button) => {
+    button.classList.remove("active");
+    button.innerHTML = '<i class="bi bi-plus-circle"></i> 2ª nota';
+  });
+
+  if (examInput) {
+    examInput.value = "";
+    examInput.classList.remove("is-invalid");
+  }
+
+  for (let i = 1; i <= state.unitCount; i++) {
+    updateUnitPreview(i);
+    updateUnitCardState(i);
+  }
+
+  updateExamCardState();
   calculateAndRender();
+  document.querySelector("#notas").scrollIntoView({ behavior: "smooth", block: "start" });
 }

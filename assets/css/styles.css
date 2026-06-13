@@ -993,3 +993,253 @@ body {
   -webkit-appearance: none;
   margin: 0;
 }
+
+
+/* Segunda nota opcional por Avaliação Online */
+.grade-item-header {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+
+.grade-item-header label {
+  margin-bottom: 0;
+}
+
+.btn-second-grade {
+  width: 100%;
+  border: 1px solid #dbeafe;
+  background: #eef4ff;
+  color: var(--primary);
+  border-radius: 10px;
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: .76rem;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-second-grade.active {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+
+.grade-input-group {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.grade-input-group small {
+  color: var(--muted);
+  font-size: .70rem;
+  font-weight: 800;
+}
+
+.second-grade-area[hidden] {
+  display: none;
+}
+
+.second-grade-help {
+  color: #64748b !important;
+  font-size: .68rem !important;
+  font-weight: 700 !important;
+}
+
+.unit-average-preview {
+  margin-top: 8px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: .73rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.unit-average-preview strong {
+  color: var(--primary);
+}
+
+@media (min-width: 576px) {
+  .grade-item-header {
+    min-height: 62px;
+  }
+}
+
+
+/* Refino do layout de segunda nota */
+.grade-item {
+  display: grid;
+  gap: 8px;
+}
+
+.grade-item-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 0;
+}
+
+.btn-second-grade {
+  align-self: flex-start;
+  width: auto;
+  min-height: 24px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: .70rem;
+  font-weight: 900;
+  gap: 4px;
+  line-height: 1;
+}
+
+.btn-second-grade i {
+  font-size: .78rem;
+}
+
+.dual-grade-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.grade-item.has-second-grade .dual-grade-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.grade-primary-area,
+.second-grade-area {
+  min-width: 0;
+}
+
+.grade-input-group {
+  margin-top: 0;
+}
+
+.grade-input-group small {
+  font-size: .69rem;
+}
+
+.grade-item input {
+  min-height: 36px;
+  height: 36px;
+}
+
+.second-grade-help {
+  margin-top: 2px;
+  line-height: 1.25;
+}
+
+.unit-average-preview {
+  margin-top: 0;
+  padding: 6px 8px;
+  font-size: .72rem;
+}
+
+@media (min-width: 576px) {
+  .grade-item-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 420px) {
+  .grade-item.has-second-grade .dual-grade-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .btn-second-grade {
+    font-size: .68rem;
+    padding: 2px 8px;
+  }
+}
+
+
+/* Ajustes de texto abaixo das duas notas */
+.second-grade-help {
+  display: block;
+  margin-top: 2px;
+  color: #64748b !important;
+  font-size: .68rem !important;
+  font-weight: 700 !important;
+  line-height: 1.3;
+}
+
+.grade-item.has-second-grade .second-grade-help {
+  grid-column: 1 / -1;
+}
+
+.unit-average-preview {
+  text-align: center;
+}
+
+
+/* Destaque visual para cards com nota vazia */
+.empty-note-card {
+  border-color: #f59e0b !important;
+  background: linear-gradient(180deg, #fffaf0, #ffffff) !important;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, .15);
+}
+
+.complete-note-card {
+  border-color: #dbeafe !important;
+}
+
+/* Remoção do botão calcular e ajuste do bloco de ações */
+.action-row.single-action {
+  grid-template-columns: 1fr;
+}
+
+.auto-calc-note {
+  margin-top: 8px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.auto-calc-note i {
+  color: var(--primary);
+  margin-right: 4px;
+}
+
+/* Feedback com reações */
+.reaction-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.reaction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.reaction-pill i {
+  font-size: .9rem;
+}
+
+.reaction-pill small {
+  font-size: .72rem;
+  font-weight: 900;
+  color: inherit;
+}
+
+.feedback-empty p,
+.feedback-box p {
+  margin-bottom: 0;
+}
