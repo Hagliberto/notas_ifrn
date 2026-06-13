@@ -1528,3 +1528,290 @@ body {
 .project-meta {
   display: none !important;
 }
+
+
+/* =========================
+   Versão 2.0.0: disciplinas e melhorias
+========================= */
+
+.subject-card {
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.subject-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.subject-card h2 {
+  font-size: 1.05rem;
+  font-weight: 950;
+  margin: 0;
+}
+
+.subject-card p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: .84rem;
+}
+
+.subject-current-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 180px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: var(--primary);
+  font-size: .72rem;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subject-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.subject-field {
+  display: grid;
+  gap: 5px;
+}
+
+.subject-field label {
+  color: #334155;
+  font-size: .76rem;
+  font-weight: 900;
+}
+
+.subject-field input,
+.subject-field select {
+  width: 100%;
+  border: 1px solid #d9e0ec;
+  border-radius: 12px;
+  padding: 10px 11px;
+  min-height: 40px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.subject-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.subject-actions .btn {
+  border-radius: 13px;
+  font-weight: 850;
+  min-height: 40px;
+}
+
+.subject-actions .btn-save {
+  grid-column: 1 / -1;
+}
+
+.subject-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: .76rem;
+  font-weight: 800;
+}
+
+.subject-status i {
+  color: var(--success);
+}
+
+.progress-summary {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: #fbfdff;
+}
+
+.progress-summary-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: #475569;
+  font-size: .78rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.progress-mini-track {
+  width: 100%;
+  height: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #edf1f7;
+}
+
+.progress-mini-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary), #60a5fa);
+  transition: width .25s ease;
+}
+
+.utility-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.utility-actions .btn {
+  border-radius: 13px;
+  font-weight: 850;
+  min-height: 40px;
+  font-size: .86rem;
+}
+
+.result-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.result-actions .btn {
+  border-radius: 13px;
+  font-weight: 850;
+  min-height: 40px;
+}
+
+.feedback-approved {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.feedback-recovery {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.feedback-failed,
+.feedback-impossible,
+.feedback-error {
+  background: #fff7f7;
+  border-color: #fecaca;
+}
+
+.feedback-partial {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+@media (min-width: 576px) {
+  .subject-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .subject-actions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .subject-actions .btn-save {
+    grid-column: auto;
+  }
+}
+
+
+/* =========================
+   Versão 2.1.0: desktop wide
+========================= */
+
+@media (min-width: 1200px) {
+  .app-container {
+    max-width: 1440px;
+    width: min(1440px, calc(100vw - 64px));
+  }
+
+  .calculator-page {
+    grid-template-columns: minmax(760px, 1.65fr) minmax(380px, .85fr);
+    column-gap: 24px;
+    row-gap: 18px;
+  }
+
+  .subject-card,
+  .input-card {
+    grid-column: 1 / 2;
+  }
+
+  .result-panel {
+    grid-column: 2 / 3;
+    grid-row: 1 / span 2;
+    top: 86px;
+  }
+
+  .feedback-card {
+    grid-column: 1 / -1;
+  }
+
+  .grades-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .grade-item {
+    min-width: 0;
+  }
+
+  .subject-grid {
+    grid-template-columns: 1.2fr .8fr;
+  }
+
+  .notes-expander .grades-list {
+    padding: 14px;
+  }
+
+  .input-card,
+  .result-panel,
+  .feedback-card,
+  .subject-card {
+    padding: 22px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .app-container {
+    max-width: 1680px;
+    width: min(1680px, calc(100vw - 96px));
+  }
+
+  .calculator-page {
+    grid-template-columns: minmax(980px, 1.8fr) minmax(420px, .75fr);
+    column-gap: 30px;
+  }
+
+  .grades-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1900px) {
+  .app-container {
+    max-width: 1840px;
+  }
+
+  .calculator-page {
+    grid-template-columns: minmax(1120px, 1.9fr) minmax(440px, .7fr);
+  }
+
+  .grades-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

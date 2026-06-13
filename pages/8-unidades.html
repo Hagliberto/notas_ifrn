@@ -103,7 +103,7 @@
 
           <section class="mobile-nav-footer">
             <span class="mobile-nav-credit"><i class="bi bi-code-slash"></i> Desenvolvido por Hagliberto Alves de Oliveira</span>
-            <span class="mobile-nav-version"><i class="bi bi-tag"></i> v1.10.0</span>
+            <span class="mobile-nav-version"><i class="bi bi-tag"></i> v2.1.0</span>
           </section>
         </div>
       </div>
@@ -119,6 +119,16 @@
         </div>
       </div>
 
+        <div class="progress-summary">
+          <div class="progress-summary-top">
+            <span><i class="bi bi-list-check"></i> Progresso</span>
+            <span id="progressText">0 de 0 avaliações preenchidas</span>
+          </div>
+          <div class="progress-mini-track">
+            <div class="progress-mini-fill" id="progressFill"></div>
+          </div>
+        </div>
+
       <form id="gradeForm" novalidate>
         <details class="notes-expander" id="notesExpander">
           <summary>
@@ -133,6 +143,16 @@
           </summary>
           <div class="grades-list" id="onlineGradesContainer"></div>
         </details>
+
+        <div class="utility-actions">
+          <button type="button" class="btn btn-outline-primary" id="btnFillEmptyZero">
+            <i class="bi bi-magic"></i> Vazias com 0
+          </button>
+          <button type="button" class="btn btn-outline-secondary" id="btnCopyResult">
+            <i class="bi bi-copy"></i> Copiar resultado
+          </button>
+        </div>
+
 
         <div class="exam-box">
           <label for="examGrade">Prova presencial</label>
