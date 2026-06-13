@@ -178,3 +178,14 @@ Exemplos inválidos:
 85,999
 abc
 ```
+
+
+## Atualização de digitação mobile
+
+Os campos de nota foram ajustados para melhorar a digitação em celulares:
+
+- os inputs agora usam teclado decimal/texto em vez de `type="number"`;
+- ponto é convertido automaticamente para vírgula;
+- a validação acontece enquanto o usuário digita;
+- o campo continua aceitando somente notas de 0 a 100;
+- o limite de duas casas decimais continua ativo.

@@ -29,9 +29,22 @@ const chartHelp = document.querySelector("#chartHelp");
 document.addEventListener("DOMContentLoaded", () => {
   if (!onlineGradesContainer) return;
   renderOnlineInputs();
+  prepareExamInput();
   bindEvents();
   calculateAndRender();
 });
+
+
+function prepareExamInput() {
+  if (!examInput) return;
+
+  examInput.type = "text";
+  examInput.inputMode = "decimal";
+  examInput.maxLength = 6;
+  examInput.autocomplete = "off";
+  examInput.placeholder = "0 a 100";
+  examInput.title = "Digite uma nota de 0 a 100 com até duas casas decimais";
+}
 
 function bindEvents() {
   form.addEventListener("input", (event) => {
@@ -80,15 +93,14 @@ function renderOnlineInputs() {
         <span class="grade-number">U${i}</span>
       </label>
       <input
-        type="number"
+        type="text"
         id="online${i}"
         class="online-grade"
-        min="0"
-        max="100"
-        step="0.01"
         inputmode="decimal"
-        placeholder="Nota"
-        data-grade-input="true"
+        autocomplete="off"
+        maxlength="6"
+        placeholder="0 a 100"
+        title="Digite uma nota de 0 a 100 com até duas casas decimais"
         aria-label="Nota da Avaliação Online ${i}">
     `;
 
@@ -97,25 +109,26 @@ function renderOnlineInputs() {
 }
 
 /**
- * Permite somente:
- * - vazio;
- * - números de 0 a 100;
- * - vírgula ou ponto como separador decimal;
- * - no máximo duas casas decimais.
+ * Máscara em tempo real para melhorar a digitação no mobile:
+ * - troca ponto por vírgula automaticamente;
+ * - aceita somente números e uma vírgula;
+ * - limita em duas casas decimais;
+ * - limita o valor máximo em 100.
  */
 function sanitizeGradeInput(input) {
-  let value = input.value.replace(",", ".");
+  const cursorPosition = input.selectionStart;
+  let value = input.value.replace(/\./g, ",");
 
-  value = value.replace(/[^\d.]/g, "");
+  value = value.replace(/[^\d,]/g, "");
 
-  const firstDotIndex = value.indexOf(".");
-  if (firstDotIndex !== -1) {
-    const beforeDot = value.slice(0, firstDotIndex + 1);
-    const afterDot = value.slice(firstDotIndex + 1).replace(/\./g, "");
-    value = beforeDot + afterDot;
+  const firstCommaIndex = value.indexOf(",");
+  if (firstCommaIndex !== -1) {
+    const beforeComma = value.slice(0, firstCommaIndex + 1);
+    const afterComma = value.slice(firstCommaIndex + 1).replace(/,/g, "");
+    value = beforeComma + afterComma;
   }
 
-  let [integerPart, decimalPart] = value.split(".");
+  let [integerPart, decimalPart] = value.split(",");
 
   integerPart = integerPart ?? "";
   decimalPart = decimalPart ?? "";
@@ -132,35 +145,59 @@ function sanitizeGradeInput(input) {
     decimalPart = decimalPart.slice(0, 2);
   }
 
-  value = value.includes(".") ? `${integerPart}.${decimalPart}` : integerPart;
+  value = value.includes(",") ? `${integerPart},${decimalPart}` : integerPart;
 
-  if (value !== "" && value !== ".") {
-    const numberValue = Number(value);
+  const numericValue = Number(value.replace(",", "."));
 
-    if (numberValue > 100) {
-      value = "100";
-    }
-
-    if (numberValue < 0) {
-      value = "0";
-    }
+  if (value !== "" && !Number.isNaN(numericValue) && numericValue > 100) {
+    value = "100";
   }
 
-  input.value = value === "." ? "" : value;
+  input.value = value;
   setInputValidity(input);
+
+  try {
+    const safePosition = Math.min(cursorPosition ?? input.value.length, input.value.length);
+    input.setSelectionRange(safePosition, safePosition);
+  } catch {
+    // Alguns navegadores mobile não permitem controlar o cursor em certos teclados.
+  }
 }
 
 function normalizeGradeInput(input) {
-  const value = parseGrade(input.value);
+  const rawValue = input.value.trim();
 
-  if (value === null) {
+  if (rawValue === "") {
     input.value = "";
     setInputValidity(input);
     return;
   }
 
-  input.value = String(value).replace(".", ".");
+  const value = parseGrade(rawValue);
+
+  if (value === null) {
+    setInputValidity(input);
+    return;
+  }
+
+  input.value = formatInputValue(value, rawValue);
   setInputValidity(input);
+}
+
+function formatInputValue(value, originalValue) {
+  const hadDecimal = originalValue.includes(",") || originalValue.includes(".");
+
+  if (!hadDecimal) {
+    return String(value).replace(".", ",");
+  }
+
+  const decimalPart = originalValue.replace(".", ",").split(",")[1] ?? "";
+
+  if (decimalPart.length === 0) {
+    return String(Math.trunc(value));
+  }
+
+  return value.toFixed(Math.min(decimalPart.length, 2)).replace(".", ",");
 }
 
 function validateAllGrades() {
@@ -177,14 +214,14 @@ function validateAllGrades() {
 }
 
 function setInputValidity(input) {
-  const rawValue = input.value.trim().replace(",", ".");
+  const rawValue = input.value.trim().replace(".", ",");
 
   input.classList.remove("is-invalid");
 
   if (rawValue === "") return true;
 
-  const pattern = /^(100|100\.0{1,2}|[0-9]{1,2}(\.\d{1,2})?)$/;
-  const numericValue = Number(rawValue);
+  const pattern = /^(100|100,0{1,2}|[0-9]{1,2}(,\d{1,2})?)$/;
+  const numericValue = Number(rawValue.replace(",", "."));
   const isValid = pattern.test(rawValue) && numericValue >= 0 && numericValue <= 100;
 
   if (!isValid) {
@@ -203,12 +240,12 @@ function getOnlineGrades() {
 function parseGrade(value) {
   if (value === "" || value === null || value === undefined) return null;
 
-  const normalizedValue = String(value).trim().replace(",", ".");
-  const pattern = /^(100|100\.0{1,2}|[0-9]{1,2}(\.\d{1,2})?)$/;
+  const normalizedValue = String(value).trim().replace(".", ",");
+  const pattern = /^(100|100,0{1,2}|[0-9]{1,2}(,\d{1,2})?)$/;
 
   if (!pattern.test(normalizedValue)) return null;
 
-  const grade = Number(normalizedValue);
+  const grade = Number(normalizedValue.replace(",", "."));
 
   if (Number.isNaN(grade)) return null;
   if (grade < 0 || grade > 100) return null;

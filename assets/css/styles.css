@@ -961,3 +961,19 @@ body {
 .feedback-error h3 {
   color: #991b1b;
 }
+
+
+/* Ajuste v3: campo de nota amigável no mobile */
+.grade-item input,
+.exam-box input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.grade-item input::-webkit-outer-spin-button,
+.grade-item input::-webkit-inner-spin-button,
+.exam-box input::-webkit-outer-spin-button,
+.exam-box input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
