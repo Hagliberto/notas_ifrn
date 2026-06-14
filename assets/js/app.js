@@ -1,11 +1,29 @@
 const CONFIG = {
-  appVersion: "2.1.0",
+  appVersion: "2.1.3",
   passGrade: 60,
   recoveryMin: 20,
   onlineWeight: 4,
   examWeight: 6,
   storageKey: "calculadoraNotasDisciplinas.v2"
 };
+
+const PROGRAMMING_SUBJECT_SUGGESTIONS = [
+  "Lógica de Programação",
+  "Algoritmos",
+  "Programação Web",
+  "Banco de Dados",
+  "JavaScript",
+  "Python",
+  "HTML e CSS",
+  "Estrutura de Dados",
+  "Engenharia de Software",
+  "Desenvolvimento Mobile",
+  "Programação Orientada a Objetos",
+  "Sistemas para Internet",
+  "Arquitetura de Computadores",
+  "Redes de Computadores",
+  "Segurança da Informação"
+];
 
 const state = {
   unitCount: Number(document.documentElement.dataset.units || 8),
@@ -40,7 +58,9 @@ const btnSaveSubject = document.querySelector("#btnSaveSubject");
 const btnNewSubject = document.querySelector("#btnNewSubject");
 const btnDeleteSubject = document.querySelector("#btnDeleteSubject");
 const currentSubjectLabel = document.querySelector("#currentSubjectLabel");
+const currentSubjectToolbarLabel = document.querySelector("#currentSubjectToolbarLabel");
 const subjectSavedStatus = document.querySelector("#subjectSavedStatus");
+const subjectUnitCountSelect = document.querySelector("#subjectUnitCount");
 const btnFillEmptyZero = document.querySelector("#btnFillEmptyZero");
 const btnCopyResult = document.querySelector("#btnCopyResult");
 const progressText = document.querySelector("#progressText");
@@ -48,16 +68,21 @@ const progressFill = document.querySelector("#progressFill");
 
 document.addEventListener("DOMContentLoaded", () => {
   renderAppVersion();
+  prepareSubjectUnitSelector();
 
-  if (!onlineGradesContainer) return;
+  if (onlineGradesContainer) {
+    renderOnlineInputs();
+    prepareExamInput();
+    bindLongPressZero();
+  }
 
-  renderOnlineInputs();
-  prepareExamInput();
   bindEvents();
-  bindLongPressZero();
   initSubjectStorage();
-  calculateAndRender();
-  updateActiveBottomNav();
+
+  if (onlineGradesContainer) {
+    calculateAndRender();
+    updateActiveBottomNav();
+  }
 });
 
 function bindEvents() {
@@ -131,14 +156,21 @@ function bindEvents() {
   btnDeleteSubject?.addEventListener("click", deleteCurrentSubject);
 
   subjectSelect?.addEventListener("change", () => {
-    if (!subjectSelect.value) return;
+    const selectedSubjectId = subjectSelect.value;
+    if (!selectedSubjectId) return;
+
     saveCurrentSubject();
-    loadSubject(subjectSelect.value);
+    loadSubject(selectedSubjectId);
   });
 
   subjectNameInput?.addEventListener("input", () => {
     updateCurrentSubjectName();
     scheduleAutoSave();
+  });
+
+  subjectUnitCountSelect?.addEventListener("change", () => {
+    state.currentSubjectId = null;
+    initSubjectStorage();
   });
 
   const sections = document.querySelectorAll("#notas, #resultado");
@@ -417,6 +449,7 @@ function formatGrade(value) {
 }
 
 function updateNumbers({ unitsAverage, examGrade, finalGrade, neededExam, isPartial }) {
+  if (!unitsAverageEl || !examResultEl || !finalGradeEl || !neededExamEl || !progressBar) return;
   unitsAverageEl.textContent = formatGrade(unitsAverage);
   examResultEl.textContent = formatGrade(examGrade);
   finalGradeEl.textContent = formatGrade(finalGrade);
@@ -536,6 +569,7 @@ function reactionMarkup(type) {
 }
 
 function updateStatus(finalGrade, unitsAverage, examGrade, neededExam) {
+  if (!statusBadge || !progressBar || !feedbackArea || !resultIcon) return;
   statusBadge.className = "status-badge";
   progressBar.className = "progress-bar";
   feedbackArea.className = "feedback-box";
@@ -811,6 +845,36 @@ function defaultStore() {
   };
 }
 
+function getSubjectUnitCount() {
+  return Number(subjectUnitCountSelect?.value || state.unitCount || 8);
+}
+
+function prepareSubjectUnitSelector() {
+  if (!subjectUnitCountSelect) return;
+  const isCalculatorPage = Boolean(onlineGradesContainer);
+  subjectUnitCountSelect.value = String(state.unitCount || 8);
+  if (isCalculatorPage) {
+    subjectUnitCountSelect.disabled = true;
+  }
+}
+
+function getSuggestedSubjectName(unitCount = getSubjectUnitCount()) {
+  const store = getStore();
+  const used = new Set(
+    store.subjects
+      .filter((subject) => subject.unitCount === unitCount)
+      .map((subject) => subject.name.trim().toLowerCase())
+  );
+
+  const available = PROGRAMMING_SUBJECT_SUGGESTIONS.filter((name) => !used.has(name.toLowerCase()));
+  const pool = available.length ? available : PROGRAMMING_SUBJECT_SUGGESTIONS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function getDirectDraftKey() {
+  return `${CONFIG.storageKey}.rascunho.${state.unitCount}`;
+}
+
 function getStore() {
   try {
     return JSON.parse(localStorage.getItem(CONFIG.storageKey)) || defaultStore();
@@ -823,12 +887,12 @@ function setStore(store) {
   localStorage.setItem(CONFIG.storageKey, JSON.stringify(store));
 }
 
-function createSubjectObject(name = "") {
+function createSubjectObject(name = "", unitCount = getSubjectUnitCount()) {
   const now = new Date().toISOString();
   return {
     id: crypto?.randomUUID ? crypto.randomUUID() : `disciplina-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    unitCount: state.unitCount,
-    name: name || `Disciplina ${state.unitCount} unidades`,
+    unitCount,
+    name: name || getSuggestedSubjectName(unitCount),
     createdAt: now,
     updatedAt: now,
     grades: {},
@@ -843,17 +907,18 @@ function initSubjectStorage() {
   }
 
   const store = getStore();
-  let subjects = store.subjects.filter((subject) => subject.unitCount === state.unitCount);
+  const unitCount = getSubjectUnitCount();
+  let subjects = store.subjects.filter((subject) => subject.unitCount === unitCount);
 
   if (!subjects.length) {
-    const subject = createSubjectObject();
+    const subject = createSubjectObject(getSuggestedSubjectName(unitCount), unitCount);
     store.subjects.push(subject);
-    store.activeByUnitCount[state.unitCount] = subject.id;
+    store.activeByUnitCount[unitCount] = subject.id;
     setStore(store);
     subjects = [subject];
   }
 
-  const activeId = store.activeByUnitCount[state.unitCount] || subjects[0].id;
+  const activeId = store.activeByUnitCount[unitCount] || subjects[0].id;
   renderSubjectOptions(activeId);
   loadSubject(activeId);
 }
@@ -862,8 +927,9 @@ function renderSubjectOptions(activeId = state.currentSubjectId) {
   if (!subjectSelect) return;
 
   const store = getStore();
+  const unitCount = getSubjectUnitCount();
   const subjects = store.subjects
-    .filter((subject) => subject.unitCount === state.unitCount)
+    .filter((subject) => subject.unitCount === unitCount)
     .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
   subjectSelect.innerHTML = subjects.map((subject) => `
@@ -880,47 +946,28 @@ function loadSubject(subjectId) {
 
   state.isRestoring = true;
   state.currentSubjectId = subject.id;
-  store.activeByUnitCount[state.unitCount] = subject.id;
+  store.activeByUnitCount[subject.unitCount] = subject.id;
   setStore(store);
 
   if (subjectNameInput) subjectNameInput.value = subject.name;
   if (currentSubjectLabel) currentSubjectLabel.textContent = subject.name;
+  if (currentSubjectToolbarLabel) currentSubjectToolbarLabel.textContent = subject.name;
 
-  clearVisualFieldsOnly();
-
-  for (let i = 1; i <= state.unitCount; i++) {
-    const unitData = subject.grades?.[i] || {};
-    const inputA = document.querySelector(`#online${i}`);
-    const inputB = document.querySelector(`#online${i}b`);
-    const secondArea = document.querySelector(`#secondArea${i}`);
-    const card = inputA?.closest(".grade-item");
-    const button = document.querySelector(`.btn-second-grade[data-unit="${i}"]`);
-
-    if (inputA) inputA.value = unitData.a || "";
-
-    if (unitData.hasSecond && secondArea && inputB && card && button) {
-      secondArea.hidden = false;
-      card.classList.add("has-second-grade");
-      button.classList.add("active");
-      button.innerHTML = '<i class="bi bi-dash-circle"></i> Remover 2ª nota';
-      inputB.value = unitData.b || "";
-    }
-
-    updateUnitPreview(i);
+  if (onlineGradesContainer) {
+    applySubjectDataToForm(subject);
   }
-
-  if (examInput) examInput.value = subject.exam || "";
 
   state.isRestoring = false;
   renderSubjectOptions(subject.id);
-  calculateAndRender();
+  if (onlineGradesContainer) calculateAndRender();
   updateSavedStatus("Carregado");
 }
 
 function collectSubjectData() {
   const grades = {};
+  const unitCount = onlineGradesContainer ? state.unitCount : getSubjectUnitCount();
 
-  for (let i = 1; i <= state.unitCount; i++) {
+  for (let i = 1; i <= unitCount; i++) {
     const inputA = document.querySelector(`#online${i}`);
     const inputB = document.querySelector(`#online${i}b`);
     const secondArea = document.querySelector(`#secondArea${i}`);
@@ -933,14 +980,19 @@ function collectSubjectData() {
   }
 
   return {
-    name: subjectNameInput?.value?.trim() || `Disciplina ${state.unitCount} unidades`,
+    name: subjectNameInput?.value?.trim() || getSuggestedSubjectName(unitCount),
     grades,
     exam: examInput?.value || ""
   };
 }
 
 function saveCurrentSubject(force = false) {
-  if (state.isRestoring || !state.currentSubjectId) return;
+  if (state.isRestoring) return;
+
+  if (!state.currentSubjectId) {
+    saveDirectDraft();
+    return;
+  }
 
   const store = getStore();
   const subjectIndex = store.subjects.findIndex((item) => item.id === state.currentSubjectId);
@@ -954,38 +1006,46 @@ function saveCurrentSubject(force = false) {
     updatedAt: new Date().toISOString()
   };
 
-  store.activeByUnitCount[state.unitCount] = state.currentSubjectId;
+  store.activeByUnitCount[getSubjectUnitCount()] = state.currentSubjectId;
   setStore(store);
 
   if (currentSubjectLabel) currentSubjectLabel.textContent = data.name;
+  if (currentSubjectToolbarLabel) currentSubjectToolbarLabel.textContent = data.name;
   renderSubjectOptions(state.currentSubjectId);
   updateSavedStatus(force ? "Salvo agora" : "Salvo automaticamente");
 }
 
 function scheduleAutoSave() {
-  if (state.isRestoring || !state.currentSubjectId) return;
+  if (state.isRestoring) return;
 
   clearTimeout(scheduleAutoSave.timer);
   scheduleAutoSave.timer = setTimeout(() => saveCurrentSubject(), 250);
 }
 
 function updateCurrentSubjectName() {
-  if (currentSubjectLabel) {
-    currentSubjectLabel.textContent = subjectNameInput?.value?.trim() || `Disciplina ${state.unitCount} unidades`;
-  }
+  const displayName = subjectNameInput?.value?.trim() || getSuggestedSubjectName();
+  if (currentSubjectLabel) currentSubjectLabel.textContent = displayName;
+  if (currentSubjectToolbarLabel) currentSubjectToolbarLabel.textContent = displayName;
 }
 
 function createNewSubject() {
+  saveCurrentSubject();
   const store = getStore();
-  const newSubject = createSubjectObject(`Nova disciplina ${state.unitCount} unidades`);
+  const unitCount = getSubjectUnitCount();
+  const suggestedName = getSuggestedSubjectName(unitCount);
+  const newSubject = createSubjectObject(suggestedName, unitCount);
 
   store.subjects.push(newSubject);
-  store.activeByUnitCount[state.unitCount] = newSubject.id;
+  store.activeByUnitCount[unitCount] = newSubject.id;
   setStore(store);
 
   renderSubjectOptions(newSubject.id);
   loadSubject(newSubject.id);
-  showToast("Nova disciplina criada.");
+  if (subjectNameInput) {
+    subjectNameInput.focus();
+    subjectNameInput.select();
+  }
+  showToast(`Sugestão criada: ${suggestedName}.`);
 }
 
 function deleteCurrentSubject() {
@@ -1000,19 +1060,20 @@ function deleteCurrentSubject() {
 
   store.subjects = store.subjects.filter((subject) => subject.id !== state.currentSubjectId);
 
-  const remaining = store.subjects.filter((subject) => subject.unitCount === state.unitCount);
+  const unitCount = getSubjectUnitCount();
+  const remaining = store.subjects.filter((subject) => subject.unitCount === unitCount);
   if (!remaining.length) {
-    const fallback = createSubjectObject();
+    const fallback = createSubjectObject(getSuggestedSubjectName(unitCount), unitCount);
     store.subjects.push(fallback);
-    store.activeByUnitCount[state.unitCount] = fallback.id;
+    store.activeByUnitCount[unitCount] = fallback.id;
   } else {
-    store.activeByUnitCount[state.unitCount] = remaining[0].id;
+    store.activeByUnitCount[unitCount] = remaining[0].id;
   }
 
   setStore(store);
 
-  renderSubjectOptions(store.activeByUnitCount[state.unitCount]);
-  loadSubject(store.activeByUnitCount[state.unitCount]);
+  renderSubjectOptions(store.activeByUnitCount[unitCount]);
+  loadSubject(store.activeByUnitCount[unitCount]);
   showToast("Disciplina removida.");
 }
 
@@ -1048,7 +1109,65 @@ function clearVisualFieldsOnly() {
 }
 
 function restoreDraftFromLegacy() {
+  const savedDraft = getDirectDraft();
+
+  if (savedDraft) {
+    state.isRestoring = true;
+    applySubjectDataToForm(savedDraft);
+    state.isRestoring = false;
+    updateSavedStatus("Carregado");
+  }
+
   calculateAndRender();
+}
+
+function getDirectDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(getDirectDraftKey()));
+  } catch {
+    return null;
+  }
+}
+
+function saveDirectDraft() {
+  if (state.isRestoring) return;
+
+  const data = collectSubjectData();
+  const draft = {
+    ...data,
+    unitCount: getSubjectUnitCount(),
+    updatedAt: new Date().toISOString()
+  };
+
+  localStorage.setItem(getDirectDraftKey(), JSON.stringify(draft));
+  updateSavedStatus("Salvo automaticamente");
+}
+
+function applySubjectDataToForm(subject) {
+  clearVisualFieldsOnly();
+
+  for (let i = 1; i <= state.unitCount; i++) {
+    const unitData = subject.grades?.[i] || {};
+    const inputA = document.querySelector(`#online${i}`);
+    const inputB = document.querySelector(`#online${i}b`);
+    const secondArea = document.querySelector(`#secondArea${i}`);
+    const card = inputA?.closest(".grade-item");
+    const button = document.querySelector(`.btn-second-grade[data-unit="${i}"]`);
+
+    if (inputA) inputA.value = unitData.a || "";
+
+    if (unitData.hasSecond && secondArea && inputB && card && button) {
+      secondArea.hidden = false;
+      card.classList.add("has-second-grade");
+      button.classList.add("active");
+      button.innerHTML = '<i class="bi bi-dash-circle"></i> Remover 2ª nota';
+      inputB.value = unitData.b || "";
+    }
+
+    updateUnitPreview(i);
+  }
+
+  if (examInput) examInput.value = subject.exam || "";
 }
 
 function escapeHtml(text) {

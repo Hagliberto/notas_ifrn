@@ -1815,3 +1815,142 @@ body {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* =========================
+   Versão 2.1.3: disciplinas em modal
+========================= */
+.home-tools {
+  margin: 12px 0;
+}
+
+.home-manage-btn,
+.subject-toolbar {
+  width: 100%;
+  border: 1px solid #dbe6ff;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ffffff, #eef4ff);
+  box-shadow: var(--shadow);
+}
+
+.home-manage-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 14px;
+  color: var(--text);
+  text-align: left;
+}
+
+.home-manage-btn strong,
+.home-manage-btn small {
+  display: block;
+}
+
+.home-manage-btn strong {
+  font-weight: 950;
+}
+
+.home-manage-btn small {
+  color: var(--muted);
+  font-size: .84rem;
+  margin-top: 2px;
+}
+
+.subject-toolbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 14px;
+  margin-bottom: 2px;
+}
+
+.subject-toolbar span {
+  display: block;
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 850;
+}
+
+.subject-toolbar strong {
+  display: block;
+  font-size: 1rem;
+  font-weight: 950;
+  color: var(--text);
+  margin-top: 1px;
+}
+
+.subject-toolbar .btn {
+  border-radius: 14px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.subject-modal-content {
+  border: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, .22);
+}
+
+.subject-modal-header {
+  border-bottom: 1px solid var(--border);
+  background: #fbfdff;
+}
+
+.subject-modal-header h5 {
+  font-weight: 950;
+}
+
+.subject-modal-header p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: .86rem;
+}
+
+.subject-card-modal {
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.subject-grid-modal {
+  grid-template-columns: 1fr;
+}
+
+.subject-field-name {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px) {
+  .subject-grid-modal {
+    grid-template-columns: .55fr 1fr;
+  }
+}
+
+@media (max-width: 575px) {
+  .subject-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .subject-toolbar .btn {
+    width: 100%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .calculator-page .subject-toolbar {
+    grid-column: 1 / 2;
+  }
+
+  .calculator-page .input-card {
+    grid-row: 2 / 3;
+  }
+
+  .calculator-page .result-panel {
+    grid-row: 1 / span 2;
+  }
+}

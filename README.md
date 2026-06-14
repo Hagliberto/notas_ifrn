@@ -157,3 +157,14 @@ git push origin main
 - A área principal agora aproveita melhor telas grandes.
 - O card de notas ficou mais largo, evitando aparência espremida.
 - O painel de média permanece lateral e fixo no desktop.
+
+### Salvamento local
+As notas são salvas automaticamente no navegador usando `localStorage`. Ao atualizar a página, os dados preenchidos são restaurados no mesmo dispositivo e no mesmo navegador.
+
+
+## v2.1.3
+
+- O gerenciamento de disciplinas saiu do card fixo e passou para um modal.
+- A tela inicial ganhou o botão **Criar disciplinas** para abrir o modal.
+- O botão **Nova** agora sugere nomes de disciplinas de programação, como Lógica de Programação, Algoritmos, Programação Web, Banco de Dados e JavaScript.
+- As páginas de 4, 6 e 8 unidades mantêm apenas uma barra compacta com a disciplina atual e o botão para gerenciar disciplinas.

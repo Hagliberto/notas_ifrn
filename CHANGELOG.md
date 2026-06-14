@@ -1,6 +1,22 @@
 # Changelog
 
+## v2.1.3
+
+- Removido o card fixo de disciplina das páginas da calculadora.
+- Adicionado modal de gerenciamento de disciplinas.
+- Adicionado botão **Criar disciplinas** na página inicial.
+- Adicionadas sugestões automáticas de disciplinas de programação ao criar uma nova disciplina.
+- Mantido o salvamento local por disciplina e por modelo de 4, 6 e 8 unidades.
+
+
 Todas as mudanças relevantes deste projeto serão documentadas aqui.
+
+## [2.1.2] - Correção do seletor de disciplina
+
+### Corrigido
+- O seletor de disciplina agora carrega corretamente a disciplina escolhida, sem voltar para a anterior.
+- As páginas de 4, 6 e 8 unidades agora exibem o painel de disciplinas com seletor, campo de nome, botão Nova, Excluir e Salvar.
+- O salvamento local continua separado por quantidade de unidades e por disciplina.
 
 ## [2.0.0] - Disciplinas e melhorias completas
 
